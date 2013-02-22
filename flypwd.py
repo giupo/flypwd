@@ -9,10 +9,9 @@ import getpass
 from Crypto.PublicKey import RSA
 import os.path
 import os
-import subprocess
 from subprocess import PIPE, Popen
 import sys
-
+import pam
 import errno
 
 def mkdir_p(path):
@@ -81,6 +80,24 @@ def expubgen():
 
     return pub
 
+def authenticateKerberos(pwd):
+    try:
+        procKinit = Popen("kinit", stdin = PIPE, stdout = PIPE)
+        procKinit.stdin.write("%s\n" % pwd)
+        rcKinit = procKinit.wait()
+        authenticated = (rcKinit == 0)
+    except OSError:
+        authenticated = False
+
+    return authenticated
+
+def authenticatePam(pwd):
+    return pam.authenticate(getpass.getuser(), pwd)
+
+def authenticate(pwd):
+    return (authenticateKerberos(pwd) or authenticatePam(pwd))    
+        
+
 def emit_pwd():
     if os.path.isfile(RSAFILE) and os.path.isfile(PWD_FILE):
         key = check_key(RSAFILE)
@@ -89,25 +106,23 @@ def emit_pwd():
 
         pwd = key.decrypt(pwd_encrypted)
         # print pwd
-        procKinit = Popen("kinit", stdin = PIPE, stdout = PIPE)
-        procKinit.stdin.write("%s\n" % pwd)
-        rcKinit = procKinit.wait()
-        if(rcKinit == 0):
-            return pwd
-        else:
+        if not authenticate(pwd):
             os.remove(PWD_FILE)
-            raise Exception("No pwd file")
+            raise Exception("Authentication Not Valid")
+
+        return pwd
+
     else:
-        raise Exception("no files")
+        raise Exception("No files RSA and PWD file")
 
 def flypwd():
     try:
         pwd = emit_pwd()
     except:
         key = exrsagen()
-        expubgen()    
+        pub = expubgen()    
         pwd = get_the_damn_password()
-        pwdEncrypted = key.publickey().encrypt(pwd, None)[0]
+        pwdEncrypted = pub.encrypt(pwd, None)[0]
         with open(PWD_FILE, 'w') as f:
             f.write(pwdEncrypted)
                     

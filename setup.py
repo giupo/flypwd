@@ -16,6 +16,7 @@ setup(
     description = 'flypwd password mgt for Python',
     long_description = open('README.md').read(),
     install_requires = [
-        "pycrypto"
+        "pycrypto",
+        "pam"
     ],
 )
