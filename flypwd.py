@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # flypwd -- gestione sicura delle password utente
 # 
@@ -17,7 +18,7 @@ import errno
 import logging
 logging.basicConfig()
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 def mkdir_p(path):
     try:
@@ -146,4 +147,5 @@ def flypwd():
     return pwd
         
     
-    
+if __name__ == '__main__':
+    sys.stdout.write(flypwd())
