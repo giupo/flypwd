@@ -40,8 +40,9 @@ PUBFILE = os.path.join(WDIR, PUBKEY)
 PWDNAM="pwd"
 PWD_FILE = os.path.join(WDIR, PWDNAM)
 KEY_SIZE = 2048
-__all__ = ['flypwd']
 
+__all__ = ['flypwd']
+__version__ = '0.0.1'
 
 
 def get_the_damn_password():
