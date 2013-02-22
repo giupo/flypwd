@@ -14,6 +14,11 @@ import sys
 import pam
 import errno
 
+import logging
+logging.basicConfig()
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
@@ -58,6 +63,7 @@ def check_key(rsafile):
 def exrsagen():
     try:
         key = check_key(RSAFILE)
+        log.debug(str(key))
         assert key.has_private()        
     except:
         key = RSA.generate(KEY_SIZE)
@@ -71,6 +77,7 @@ def exrsagen():
 def expubgen():
     try:
         pub = check_key(PUBFILE)
+        log.debug(str(pub))
         assert pub.has_private() is not True
     except:
         key = check_key(RSAFILE)        
@@ -85,8 +92,10 @@ def authenticateKerberos(pwd):
         procKinit = Popen("kinit", stdin = PIPE, stdout = PIPE)
         procKinit.stdin.write("%s\n" % pwd)
         rcKinit = procKinit.wait()
-        authenticated = (rcKinit == 0)
+        log.debug("kinit rc: %d" % rcKinit)
+        authenticated = (rcKinit == 0)        
     except OSError:
+        log.debug("could not find kinit...")
         authenticated = False
 
     return authenticated
@@ -95,7 +104,9 @@ def authenticatePam(pwd):
     return pam.authenticate(getpass.getuser(), pwd)
 
 def authenticate(pwd):
-    return (authenticateKerberos(pwd) or authenticatePam(pwd))    
+    auth = (authenticateKerberos(pwd) or authenticatePam(pwd))    
+    log.debug("is authenticated? %s" % str(auth))
+    return auth
         
 
 def emit_pwd():
@@ -113,6 +124,7 @@ def emit_pwd():
         return pwd
 
     else:
+        log.debug("No RSA and PWD file")
         raise Exception("No files RSA and PWD file")
 
 def flypwd():
@@ -122,9 +134,12 @@ def flypwd():
         key = exrsagen()
         pub = expubgen()    
         pwd = get_the_damn_password()
+    
         pwdEncrypted = pub.encrypt(pwd, None)[0]
         with open(PWD_FILE, 'w') as f:
             f.write(pwdEncrypted)
+            
+        pwd = emit_pwd()
                     
     return pwd
         
