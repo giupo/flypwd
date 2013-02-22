@@ -8,6 +8,7 @@
 
 import getpass
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5
 import os.path
 import os
 from subprocess import PIPE, Popen
@@ -118,7 +119,8 @@ def emit_pwd():
         with open(PWD_FILE,'r') as pwdfile:
             pwd_encrypted = pwdfile.read()
 
-        pwd = key.decrypt(pwd_encrypted)
+        cipher = PKCS1_v1_5.new(key)
+        pwd = cipher.decrypt(pwd_encrypted, None)
         # print pwd
         if not authenticate(pwd):
             os.remove(PWD_FILE)
@@ -137,8 +139,10 @@ def flypwd():
         key = exrsagen()
         pub = expubgen()    
         pwd = get_the_damn_password()
-    
-        pwdEncrypted = pub.encrypt(pwd, None)[0]
+        
+        cipher = PKCS1_v1_5.new(pub)
+
+        pwdEncrypted = cipher.encrypt(pwd)
         with open(PWD_FILE, 'w') as f:
             f.write(pwdEncrypted)
             
