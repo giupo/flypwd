@@ -74,7 +74,6 @@ emit_pwd
 exrsagen
 expubgen
 
-
 if [ ! -f "${PWD_FILE}" ]; then
     if tty -s 
     then
