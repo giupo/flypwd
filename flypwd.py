@@ -49,8 +49,9 @@ def get_the_damn_password():
     if sys.stdout.isatty():
         return getpass.getpass()
     else:
-        # gestire lo stato senza shell interattiva (Exception? UI?)
+        # che cavolo faccio qui?? UI?
         pass
+
 
 def check_key(rsafile):
     """
