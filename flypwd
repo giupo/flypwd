@@ -1,0 +1,94 @@
+#! /bin/bash
+
+# flypwd -- gestione sicura delle password utente
+#
+# Rev:
+#
+#  $LastChangedRevision: 22 $
+#
+# 
+# Uso:
+# 
+# flypwd --clean -- cancella le credenziali crittografate utente
+# flypwd         -- registra le credenziali crittografate
+#
+#
+WDIR=$HOME/.ssh
+RSAKEY=pwd.pem
+PUBKEY=pwd.pub
+RSAFILE=${WDIR}/${RSAKEY}
+PUBFILE=${WDIR}/${PUBKEY}
+PWDNAM=pwd
+PWD_FILE=${WDIR}/${PWDNAM}
+
+check_key() {    
+  if [ -f "$1" ]; then 
+    openssl rsa -check -in "$1" >/dev/null 2>/dev/null
+    if [ $? -eq 0 ]; then
+	    [ -f "$PUBFILE" ] && rm -f  "$PUBFILE" 
+	    return 1
+    fi
+  fi
+  return 0
+}
+
+exrsagen() {  
+  check_key "$RSAFILE" 
+  if [ $? ]; then 
+	  [ -f "$RSAFILE" ] && rm -f  "$RSAFILE" 
+	  ssh-keygen -t rsa -f "$RSAFILE" -N "" -q  2>/dev/null 
+  fi
+}
+expubgen() {  
+  check_key "$PUBFILE" 
+  if [ $? ]; then
+	  [ -f "$PUBFILE" ] && rm -f  "$PUBFILE" 
+	  openssl rsa -in "$RSAFILE" -out "$PUBFILE" -outform PEM -pubout 2>/dev/null
+  fi
+}
+
+emit_pwd() {
+  if [ -f "${RSAFILE}" -a -f "${PWD_FILE}" ] ; then 
+	  passw=$(openssl rsautl -decrypt -inkey "${RSAFILE}" -in "${PWD_FILE}")
+	  echo $passw | kinit >/dev/null
+	  if [ $? -eq 0 ] ; then
+	    echo $passw
+	    exit 0
+	  else
+	    rm -f "${PWD_FILE}"
+	  fi
+  fi    
+}
+
+if [ x"$1" == x"--reset" ] ; then
+  rm -f ${PWD_FILE} ${RSAFILE}* ${PUBFILE}
+fi
+
+if [ x"$1" == x"--clean" ] ; then
+  rm -f ${PWD_FILE} ${RSAFILE}* ${PUBFILE}
+  exit 0
+fi
+
+
+emit_pwd
+exrsagen
+expubgen
+
+ 
+if [ ! -f "${PWD_FILE}" ]; then
+  if tty -s 
+  then
+   	stty -echo 
+    read -p "Password: " passw; echo
+    stty echo
+    echo $passw | kinit >/dev/null
+    if [ $? -eq 0  ] ; then
+      openssl rsautl -encrypt -inkey "$PUBFILE" -pubin -in <(echo  $passw) -out "${PWD_FILE}" 2>/dev/null
+      emit_pwd
+    else
+      exit 1
+    fi
+  else
+    exit 1
+  fi
+fi
