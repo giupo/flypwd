@@ -3,6 +3,7 @@
 from distutils.core import setup
 from setuptools import find_packages
 from flypwd import __version__
+import flypwd.__doc__ as doc
 
 setup(
     name = 'flypwd',
@@ -12,7 +13,7 @@ setup(
     packages = find_packages(exclude=['test']),  
     url = 'http://pypi.python.org/pypi/flypwd/',
     license = 'LICENSE.txt',
-    description = 'flypwd password mgt for Python',
+    description = doc,
     long_description = open('README.md').read(),
     install_requires = [
         "pycrypto",

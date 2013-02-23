@@ -5,6 +5,7 @@
 #
 # Questa versione NON funziona con i file trattati con flypwd/bash
 
+"""Library (and UI) for flypwd password management"""
 
 import getpass
 from Crypto.PublicKey import RSA
@@ -15,6 +16,7 @@ from subprocess import PIPE, Popen
 import sys
 import pam
 import errno
+import argparse
 
 import logging
 logging.basicConfig()
@@ -46,13 +48,12 @@ KEY_SIZE = 2048
 __all__ = ['flypwd']
 __version__ = '0.0.1'
 
+class AuthenticationException(Exception):
+    """ notifies the error upon authentication """
+    pass
 
-def get_the_damn_password():
-    if sys.stdout.isatty():
-        return getpass.getpass()
-    else:
-        # che cavolo faccio qui?? UI?
-        pass
+def get_the_damn_password():    
+    return getpass.getpass()
 
 
 def check_key(rsafile):
@@ -124,7 +125,7 @@ def emit_pwd():
         # print pwd
         if not authenticate(pwd):
             os.remove(PWD_FILE)
-            raise Exception("Authentication Not Valid")
+            raise AuthenticationException()
 
         return pwd
 
@@ -134,7 +135,7 @@ def emit_pwd():
 
 def flypwd():
     try:
-        pwd = emit_pwd()
+        pwd = emit_pwd()    
     except:
         key = exrsagen()
         pub = expubgen()    
@@ -145,11 +146,52 @@ def flypwd():
         pwdEncrypted = cipher.encrypt(pwd)
         with open(PWD_FILE, 'w') as f:
             f.write(pwdEncrypted)
-            
+
         pwd = emit_pwd()
-                    
+
     return pwd
+
+def clean():
+    """ Removes the files under the work dir """
+    try:
+        os.remove(RSAFILE)
+    except Exception as e:
+        log.warning(e)
+
+    try:
+        os.remove(PUBFILE)
+    except Exception as e:        
+        log.warning(e)        
+    
+    try:
+        os.remove(PWD_FILE)
+    except Exception as e:
+        log.warning(e)        
         
     
 if __name__ == '__main__':
-    sys.stdout.write(flypwd())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--clean', '-c', 
+                        action = 'store_true', 
+                        help="Removes the priv/pub key and pwd file")
+
+    parser.add_argument('--printout', '-p', 
+                        action = 'store_true', 
+                        help="Shows the password: WARNING ;) ")
+                    
+    args = parser.parse_args()
+
+    if(args.clean):
+        clean()
+        sys.exit(0)
+    try:
+        pwd = flypwd()
+        if(args.printout or not sys.stdout.isatty()):
+            # o mi dai il printout o non sto su una shell interattiva
+            # ed io ti scrivo la pwd su standard output...
+            sys.stdout.write(pwd)
+        else:
+            log.info("Your password is stored")
+    except AuthenticationException as ae:
+        log.error("Authentication Error: your password was not stored")
+                
