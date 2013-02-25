@@ -5,7 +5,7 @@
 #
 # Questa versione NON funziona con i file trattati con flypwd/bash
 
-"""Library (and UI) for flypwd password management"""
+__doc__="""Library (and UI) for flypwd password management"""
 
 import getpass
 from Crypto.PublicKey import RSA

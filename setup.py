@@ -3,7 +3,7 @@
 from distutils.core import setup
 from setuptools import find_packages
 from flypwd import __version__
-import flypwd.__doc__ as doc
+from flypwd import __doc__ as doc 
 
 setup(
     name = 'flypwd',
