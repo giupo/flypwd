@@ -45,8 +45,8 @@ PWDNAM="pwd"
 PWD_FILE = os.path.join(WDIR, PWDNAM)
 KEY_SIZE = 2048
 
-__all__ = ['flypwd']
-__version__ = '0.0.1'
+__all__ = ['flypwd', 'clean', 'main']
+
 
 class AuthenticationException(Exception):
     """ notifies the error upon authentication """
@@ -127,6 +127,9 @@ def emit_pwd():
             os.remove(PWD_FILE)
             raise AuthenticationException()
 
+        if pwd.endswith('\n'):
+            return pwd[:-1]
+
         return pwd
 
     else:
@@ -168,8 +171,8 @@ def clean():
     except Exception as e:
         log.warning(e)        
         
-    
-if __name__ == '__main__':
+def main():
+    """console entry-point"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--clean', '-c', 
                         action = 'store_true', 
@@ -195,3 +198,6 @@ if __name__ == '__main__':
     except AuthenticationException as ae:
         log.error("Authentication Error: your password was not stored")
                 
+
+if __name__ == '__main__':
+    main()

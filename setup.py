@@ -3,7 +3,11 @@
 from distutils.core import setup
 from setuptools import find_packages
 from flypwd import __version__
+<<<<<<< HEAD
 import flypwd.__doc__ as doc
+=======
+from flypwd import __doc__ as doc 
+>>>>>>> f53a9bfdb7e5329dcc5f3b033ca3bca0be269a6f
 
 setup(
     name = 'flypwd',
@@ -19,4 +23,9 @@ setup(
         "pycrypto",
         "pam"
     ],
-)
+    entry_points = {
+        'console_scripts' : [
+            'flypwd = flypwd:main'
+            ]
+        }
+    )
