@@ -12,7 +12,7 @@ setup(
     author_email = 'giuseppe.acito@bancaditalia.it',
     packages = find_packages(exclude=['test']),  
     url = 'http://pypi.python.org/pypi/flypwd/',
-    license = 'LICENSE.txt',
+    license = open('LICENSE.txt').read(),
     description = doc,
     long_description = open('README.md').read(),
     install_requires = [
