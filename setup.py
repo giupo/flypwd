@@ -19,4 +19,9 @@ setup(
         "pycrypto",
         "pam"
     ],
-)
+    entry_points = {
+        'console_scripts' : [
+            'flypwd = flypwd:main'
+            ]
+        }
+    )

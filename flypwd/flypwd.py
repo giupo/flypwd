@@ -45,7 +45,7 @@ PWDNAM="pwd"
 PWD_FILE = os.path.join(WDIR, PWDNAM)
 KEY_SIZE = 2048
 
-__all__ = ['flypwd', 'clean']
+__all__ = ['flypwd', 'clean', 'main']
 
 
 class AuthenticationException(Exception):
@@ -171,8 +171,8 @@ def clean():
     except Exception as e:
         log.warning(e)        
         
-    
-if __name__ == '__main__':
+def main():
+    """console entry-point"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--clean', '-c', 
                         action = 'store_true', 
@@ -198,3 +198,6 @@ if __name__ == '__main__':
     except AuthenticationException as ae:
         log.error("Authentication Error: your password was not stored")
                 
+
+if __name__ == '__main__':
+    main()
