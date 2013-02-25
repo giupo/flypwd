@@ -127,6 +127,9 @@ def emit_pwd():
             os.remove(PWD_FILE)
             raise AuthenticationException()
 
+        if pwd.endswith('\n'):
+            return pwd[:-1]
+
         return pwd
 
     else:
