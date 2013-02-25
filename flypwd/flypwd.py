@@ -5,7 +5,7 @@
 #
 # Questa versione NON funziona con i file trattati con flypwd/bash
 
-__doc__="""Library (and UI) for flypwd password management"""
+"""Library (and UI) for flypwd password management"""
 
 import getpass
 from Crypto.PublicKey import RSA
@@ -45,8 +45,8 @@ PWDNAM="pwd"
 PWD_FILE = os.path.join(WDIR, PWDNAM)
 KEY_SIZE = 2048
 
-__all__ = ['flypwd']
-__version__ = '0.0.1'
+__all__ = ['flypwd', 'clean']
+
 
 class AuthenticationException(Exception):
     """ notifies the error upon authentication """
