@@ -34,15 +34,19 @@ def mkdir_p(path):
 HOME = os.path.expanduser("~")
 WDIR = os.path.join(HOME, ".ssh")
 
+# Assert you have .ssh ;)
 mkdir_p(WDIR)
 
+# Constants, constants everywhere...
 RSAKEY = "pwd.pem"
 PUBKEY = "pwd.pub"
 RSAFILE = os.path.join(WDIR, RSAKEY)
 PUBFILE = os.path.join(WDIR, PUBKEY)
-
 PWDNAM="pwd"
+
 PWD_FILE = os.path.join(WDIR, PWDNAM)
+
+#That's quite important, it's the size of the RSA key
 KEY_SIZE = 2048
 
 __all__ = ['flypwd', 'clean', 'main']
@@ -52,9 +56,12 @@ class AuthenticationException(Exception):
     """ notifies the error upon authentication """
     pass
 
-def get_the_damn_password():    
-    return getpass.getpass()
-
+def get_the_damn_password():
+    # I love Python!
+    if sys.stdin.isatty():
+        return getpass.getpass()
+    else:
+        raise Exception("no interactive shell: impossible to retrieve password")
 
 def check_key(rsafile):
     """
