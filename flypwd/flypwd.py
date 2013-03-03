@@ -116,7 +116,8 @@ def authenticatePam(pwd):
     return pam.authenticate(getpass.getuser(), pwd)
 
 def authenticate(pwd):
-    auth = (authenticateKerberos(pwd) or authenticatePam(pwd))    
+    # auth = (authenticateKerberos(pwd) or authenticatePam(pwd))
+    auth = (authenticatePam(pwd) or authenticateKerberos(pwd))       
     log.debug("is authenticated? %s" % str(auth))
     return auth
         
