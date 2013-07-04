@@ -2,8 +2,6 @@
 #
 # flypwd -- gestione sicura delle password utente
 # 
-#
-# Questa versione NON funziona con i file trattati con flypwd/bash
 
 """Library (and UI) for flypwd password management"""
 
@@ -14,7 +12,12 @@ import os.path
 import os
 from subprocess import PIPE, Popen
 import sys
+
+# The following 'pam' package can be found here:
+# http://atlee.ca/software/pam/index.html
+
 import pam
+
 import errno
 import argparse
 
