@@ -9,7 +9,7 @@ setup(
     name = 'flypwd',
     version = __version__,
     author = 'Giuseppe Acito',
-    author_email = 'giuseppe.acito@bancaditalia.it',
+    author_email = 'giuseppe.acito@gmail.it',
     packages = find_packages(exclude=['test']),
     url = 'http://pypi.python.org/pypi/flypwd/',
     license = open('LICENSE.txt').read(),
