@@ -17,11 +17,12 @@ setup(
     long_description = open('README.md').read(),
     install_requires = [
         "pycrypto",
-        "pam"
+        #"pam" # DON'T ever try to uncomment this line: pam !=PAM and pip makes a mess about it.
+        # the dependency_link below SHOULD be enough. Shame level : 9000
     ],
 
     dependency_links=['http://atlee.ca/software/pam/dist/0.1.3/pam-0.1.3.tar.gz#egg=pam'],
-    
+
     entry_points = {
         'console_scripts' : [
             'flypwd = flypwd:main'
