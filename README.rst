@@ -27,8 +27,8 @@ then the usual::
 
 Dependencies
 ~~~~~~~~~~~~
- - `pycrypto`_ (to encrypt/decrypt)
- - `pam`_ (to authenticate: WatchIt! Don't "pip install pam": pip will install another module PAM, which will give you just headache). That's why I've removed the `install_requires` entry: please download `pam`_ from the link, gunzip it, and then execute the usual "python setup.py install" for `pam`_
+- `pycrypto`_ (to encrypt/decrypt)
+- `pam`_ (to authenticate: WatchIt! Don't "pip install pam": pip will install another module PAM, which will give you just headache). That's why I've removed the *install_requires* entry: please download `pam`_ from the link, gunzip it, and then execute the usual "python setup.py install" for `pam`_
 
 
 How does it works
@@ -73,7 +73,7 @@ Add a callback to retrieve the password in different environments (UI, tty, etc.
 - `Buildout`_
 - `modern-package-template`_
 
-
+.. _here: http://github.com/giupo/flypwd
 .. _pycrypto: https://pypi.python.org/pypi/pycrypto
 .. _pam: https://pypi.python.org/pypi/pam
 .. _Buildout: http://www.buildout.org/
