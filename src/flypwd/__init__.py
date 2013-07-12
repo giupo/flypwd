@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
 #
 # flypwd -- gestione sicura delle password utente
-# 
+#
 
-"""Library (and UI) for flypwd password management"""
+"""Library for flypwd password management"""
 
 import getpass
 from Crypto.PublicKey import RSA
@@ -15,11 +17,18 @@ import sys
 
 # The following 'pam' package can be found here:
 # http://atlee.ca/software/pam/index.html
+#
+# DON'T please DON'T "pip install pam", because
+# you'll find yourself struggling with PAM (installed by the mentioned
+# "pip" invocation  which is totally different from the one at the URL
+# http://atlee.ca/software/pam/index.html
+#
+# My best wishes to who has created this mess.
 
 import pam
 
 import errno
-import argparse
+from argparse import ArgumentParser
 
 import logging
 logging.basicConfig()
@@ -59,10 +68,10 @@ class AuthenticationException(Exception):
     """ notifies the error upon authentication """
     pass
 
-def get_the_damn_password():
+def get_the_damn_password(prompt = 'Password :'):
     # I love Python!
     if sys.stdin.isatty():
-        return getpass.getpass()
+        return getpass.getpass(prompt)
     else:
         raise Exception("no interactive shell: impossible to retrieve password")
 
@@ -79,14 +88,14 @@ def exrsagen():
     try:
         key = check_key(RSAFILE)
         log.debug(str(key))
-        assert key.has_private()        
+        assert key.has_private()
     except:
         key = RSA.generate(KEY_SIZE)
         with open(RSAFILE, 'w') as f:
             f.write(key.exportKey('PEM'))
         with open(PUBFILE, 'w') as f:
             f.write(key.publickey().exportKey())
-    
+
     return key
 
 def expubgen():
@@ -95,7 +104,7 @@ def expubgen():
         log.debug(str(pub))
         assert pub.has_private() is not True
     except:
-        key = check_key(RSAFILE)        
+        key = check_key(RSAFILE)
         with open(PUBFILE, 'w') as f:
             pub = key.publickey().exportKey()
             f.write(pub)
@@ -108,7 +117,7 @@ def authenticateKerberos(pwd):
         procKinit.stdin.write("%s\n" % pwd)
         rcKinit = procKinit.wait()
         log.debug("kinit rc: %d" % rcKinit)
-        authenticated = (rcKinit == 0)        
+        authenticated = (rcKinit == 0)
     except OSError:
         log.debug("could not find kinit...")
         authenticated = False
@@ -120,23 +129,24 @@ def authenticatePam(pwd):
 
 def authenticate(pwd):
     # auth = (authenticateKerberos(pwd) or authenticatePam(pwd))
-    auth = (authenticatePam(pwd) or authenticateKerberos(pwd))       
+    auth = (authenticatePam(pwd) or authenticateKerberos(pwd))
     log.debug("is authenticated? %s" % str(auth))
     return auth
-        
 
-def emit_pwd():
-    if os.path.isfile(RSAFILE) and os.path.isfile(PWD_FILE):
+
+def emit_pwd(nome_file = PWD_FILE, auth=True):
+    if os.path.isfile(RSAFILE) and os.path.isfile(nome_file):
         key = check_key(RSAFILE)
-        with open(PWD_FILE,'r') as pwdfile:
+        with open(nome_file,'r') as pwdfile:
             pwd_encrypted = pwdfile.read()
 
         cipher = PKCS1_v1_5.new(key)
         pwd = cipher.decrypt(pwd_encrypted, None)
-        # print pwd
-        if not authenticate(pwd):
-            os.remove(PWD_FILE)
-            raise AuthenticationException()
+
+        if auth:
+            if not authenticate(pwd):
+                os.remove(nome_file)
+                raise AuthenticationException()
 
         if pwd.endswith('\n'):
             return pwd[:-1]
@@ -144,28 +154,30 @@ def emit_pwd():
         return pwd
 
     else:
-        log.debug("No RSA and PWD file")
-        raise Exception("No files RSA and PWD file")
+        log.debug("No RSA or PWD file")
+        raise Exception("No files RSA or PWD file")
 
-def flypwd():
+def flypwd(nome_file=None, prompt='Password: ', auth=True):
     try:
-        pwd = emit_pwd()    
-    except:
+        pwd = emit_pwd(nome_file, auth=auth)
+    except Exception as e:
+        log.warn(e)
         key = exrsagen()
-        pub = expubgen()    
-        pwd = get_the_damn_password()
-        
+        pub = expubgen()
+        pwd = get_the_damn_password(prompt)
+
         cipher = PKCS1_v1_5.new(pub)
 
         pwdEncrypted = cipher.encrypt(pwd)
-        with open(PWD_FILE, 'w') as f:
+        log.debug("saving")
+        with open(nome_file, 'w') as f:
             f.write(pwdEncrypted)
 
-        pwd = emit_pwd()
+        pwd = emit_pwd(nome_file, auth=auth)
 
     return pwd
 
-def clean():
+def clean(nome_file=None):
     """ Removes the files under the work dir """
     try:
         os.remove(RSAFILE)
@@ -174,32 +186,46 @@ def clean():
 
     try:
         os.remove(PUBFILE)
-    except Exception as e:        
-        log.warning(e)        
-    
-    try:
-        os.remove(PWD_FILE)
     except Exception as e:
-        log.warning(e)        
-        
+        log.warning(e)
+
+    try:
+        if nome_file is None:
+            nome_file = PWD_FILE
+        os.remove(nome_file)
+    except Exception as e:
+        log.warning(e)
+
 def main():
     """console entry-point"""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--clean', '-c', 
-                        action = 'store_true', 
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument('--clean', '-c',
+                        action = 'store_true',
                         help="Removes the priv/pub key and pwd file")
 
-    parser.add_argument('--printout', '-p', 
-                        action = 'store_true', 
+    parser.add_argument('--printout', '-p',
+                        action = 'store_true',
                         help="Shows the password: WARNING ;) ")
-                    
-    args = parser.parse_args()
 
+    parser.add_argument('--noauth', '-n',
+                        action = 'store_false',
+                        help="Verify authentication on PAM or Kerberos")
+
+    parser.add_argument('nomefile', nargs='?', default=PWD_FILE,
+                        help="filename to store encrypted password")
+
+
+    args = parser.parse_args()
+    nomefile = os.path.join(WDIR,args.nomefile)
+    log.debug(args)
+    should_auth = (not args.noauth) or nomefile == PWD_FILE
     if(args.clean):
-        clean()
+        log.debug("cleaning..")
+        clean(nomefile)
         sys.exit(0)
     try:
-        pwd = flypwd()
+        log.debug("Should we authenticate? %s" % str(should_auth))
+        pwd = flypwd(nomefile, auth=should_auth)
         if(args.printout or not sys.stdout.isatty()):
             # o mi dai il printout o non sto su una shell interattiva
             # ed io ti scrivo la pwd su standard output...
@@ -208,7 +234,7 @@ def main():
             log.info("Your password is stored")
     except AuthenticationException as ae:
         log.error("Authentication Error: your password was not stored")
-                
+
 
 if __name__ == '__main__':
     main()

@@ -1,31 +1,43 @@
-#!/usr/bin/env python
+from setuptools import setup, find_packages
+import sys, os
 
-from distutils.core import setup
-from setuptools import find_packages
-from flypwd import __version__
-from flypwd import __doc__ as doc
+here = os.path.abspath(os.path.dirname(__file__))
+README = open(os.path.join(here, 'README.rst')).read()
+NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
-setup(
-    name = 'flypwd',
-    version = __version__,
-    author = 'Giuseppe Acito',
-    author_email = 'giuseppe.acito@gmail.it',
-    packages = find_packages(exclude=['test']),
-    url = 'http://pypi.python.org/pypi/flypwd/',
-    license = open('LICENSE.txt').read(),
-    description = doc,
-    long_description = open('README.md').read(),
-    install_requires = [
-        "pycrypto",
-        #"pam" # DON'T ever try to uncomment this line: pam !=PAM and pip makes a mess about it.
-        # the dependency_link below SHOULD be enough. Shame level : 9000
+
+version = '0.1.0'
+
+install_requires = [
+    # List your project dependencies here.
+    # For more details, see:
+    # http://packages.python.org/distribute/setuptools.html#declaring-dependencies
+    "pycrypto",
+    # "pam"
+    # DON'T please DON'T "pip install pam" but take it here:
+    # http://atlee.ca/software/pam/index.html or
+    # https://pypi.python.org/pypi/pam
+]
+
+
+setup(name='flypwd',
+    version=version,
+    description="Utility to store passwords on file-system",
+    long_description=README + '\n\n' + NEWS,
+    classifiers=[
+      # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     ],
-
-    dependency_links=['http://atlee.ca/software/pam/dist/0.1.3/pam-0.1.3.tar.gz#egg=pam'],
-
-    entry_points = {
-        'console_scripts' : [
-            'flypwd = flypwd:main'
-            ]
-        }
-    )
+    keywords='passwords store encrypt',
+    author='Giuseppe Acito',
+    author_email='giuseppe.acito@gmail.com',
+    url='https://gihub.com/giupo/flypwd',
+    license='MIT',
+    packages=find_packages('src'),
+    package_dir = {'': 'src'},include_package_data=True,
+    zip_safe=False,
+    install_requires=install_requires,
+    entry_points={
+        'console_scripts':
+            ['flypwd=flypwd:main']
+    }
+)
