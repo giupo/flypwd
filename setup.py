@@ -1,5 +1,6 @@
-from setuptools import setup, find_packages
-import sys, os
+from setuptools import find_packages
+from distutils.core  import setup
+import os
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
