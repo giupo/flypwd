@@ -58,7 +58,6 @@ Now with a different file::
 
 From the code::
      from flypwd import flypwd
-
      flypwd() # same as command
      flypwd("anotherfileName") 
   
@@ -67,6 +66,7 @@ TODO
 
 Add a callback to retrieve the password in different environments (UI, tty, etc...)
 
+Credits
 -------
 
 - `Distribute`_
