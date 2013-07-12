@@ -21,7 +21,7 @@ Install
 Download the package from `here`_ and then unzip it somewhere on your 
 filesystem, then chdir into that dir
 
-then the usual:
+then the usual::
 
     [sudo] python setup.py install
 
@@ -34,7 +34,7 @@ Dependencies
 How does it works
 -----------------
 
-Run it:
+Run it::
 
     $ flypwd               
     WARNING:flypwd:No files RSA or PWD file # no RSA or pwd file, let's do it
@@ -47,7 +47,7 @@ Then it asks for the password (since you haven't specified a different password 
 
 *NB*: if you look into $HOME/.ssh, you'll find a bunch of new files added (pwd.pem, pwd.pub, pwd = private, public, password file)
 
-Now with a different file:
+Now with a different file::
 
      $ flypwd another
      WARNING:flypwd:No files RSA or PWD file # another wasn't there
@@ -56,8 +56,7 @@ Now with a different file:
 
 *NB* as before: now you'll have $HOME/.ssh/`another` with the encrypted password
 
-From the code:
-
+From the code::
      from flypwd import flypwd
 
      flypwd() # same as command
