@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 def mkdir_p(path):
+    """Helper function mimic the mkdir -p option"""
     try:
         os.makedirs(path)
     except OSError as exc: # Python >2.5
@@ -43,10 +44,11 @@ def mkdir_p(path):
             pass
         else: raise
 
+__PROG_DIR__ = ".flypwd"
 HOME = os.path.expanduser("~")
-WDIR = os.path.join(HOME, ".ssh")
+WDIR = os.path.join(HOME, __PROG_DIR__)
 
-# Assert you have .ssh ;)
+# Assert you have the working dir ;)
 mkdir_p(WDIR)
 
 # Constants, constants everywhere...
@@ -85,6 +87,7 @@ def check_key(rsafile):
 
 
 def exrsagen():
+    """Generates the private key"""
     try:
         key = check_key(RSAFILE)
         log.debug(str(key))
@@ -99,6 +102,7 @@ def exrsagen():
     return key
 
 def expubgen():
+    """generates the public key"""
     try:
         pub = check_key(PUBFILE)
         log.debug(str(pub))
@@ -112,6 +116,7 @@ def expubgen():
     return pub
 
 def authenticateKerberos(pwd):
+    """Macheronic authentication via Kerberos"""
     try:
         procKinit = Popen("kinit", stdin = PIPE, stdout = PIPE)
         procKinit.stdin.write("%s\n" % pwd)
@@ -125,9 +130,11 @@ def authenticateKerberos(pwd):
     return authenticated
 
 def authenticatePam(pwd):
+    """Authentication through PAM"""
     return pam.authenticate(getpass.getuser(), pwd)
 
 def authenticate(pwd):
+    """Authenticates the current user with the standard pwd-file password"""
     # auth = (authenticateKerberos(pwd) or authenticatePam(pwd))
     auth = (authenticatePam(pwd) or authenticateKerberos(pwd))
     log.debug("is authenticated? %s" % str(auth))
@@ -135,6 +142,7 @@ def authenticate(pwd):
 
 
 def emit_pwd(nome_file = PWD_FILE, auth=True):
+    """Emits the password for the given filename"""
     if os.path.isfile(RSAFILE) and os.path.isfile(nome_file):
         key = check_key(RSAFILE)
         with open(nome_file,'r') as pwdfile:
@@ -142,6 +150,8 @@ def emit_pwd(nome_file = PWD_FILE, auth=True):
 
         cipher = PKCS1_v1_5.new(key)
         pwd = cipher.decrypt(pwd_encrypted, None)
+        if pwd is None:
+            raise Exception("No password found")
 
         if auth:
             if not authenticate(pwd):
@@ -158,6 +168,8 @@ def emit_pwd(nome_file = PWD_FILE, auth=True):
         raise Exception("No files RSA or PWD file")
 
 def flypwd(nome_file=None, prompt='Password: ', auth=True):
+    """ Main entry point    
+    """
     try:
         pwd = emit_pwd(nome_file, auth=auth)
     except Exception as e:
@@ -207,8 +219,8 @@ def main():
                         action = 'store_true',
                         help="Shows the password: WARNING ;) ")
 
-    parser.add_argument('--noauth', '-n',
-                        action = 'store_false',
+    parser.add_argument('--auth', '-a',
+                        action = 'store_true',
                         help="Verify authentication on PAM or Kerberos")
 
     parser.add_argument('nomefile', nargs='?', default=PWD_FILE,
@@ -218,7 +230,7 @@ def main():
     args = parser.parse_args()
     nomefile = os.path.join(WDIR,args.nomefile)
     log.debug(args)
-    should_auth = (not args.noauth) or nomefile == PWD_FILE
+    should_auth = args.auth or nomefile == PWD_FILE
     if(args.clean):
         log.debug("cleaning..")
         clean(nomefile)
