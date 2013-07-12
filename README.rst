@@ -56,9 +56,7 @@ Now with a different file::
 
 *NB* as before: now you'll have $HOME/.ssh/`another` with the encrypted password
 
-From the code, it's just the same as command line:
-
-::
+From the code, it's just the same as command line::
      from flypwd import flypwd
      flypwd() # same as command
      flypwd("anotherfileName") 
