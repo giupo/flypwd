@@ -33,7 +33,7 @@ from argparse import ArgumentParser
 import logging
 logging.basicConfig()
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 def mkdir_p(path):
     """Helper function mimic the mkdir -p option"""
@@ -52,167 +52,25 @@ WDIR = os.path.join(HOME, __PROG_DIR__)
 mkdir_p(WDIR)
 
 # Constants, constants everywhere...
-RSAKEY = "pwd.pem"
-PUBKEY = "pwd.pub"
-RSAFILE = os.path.join(WDIR, RSAKEY)
-PUBFILE = os.path.join(WDIR, PUBKEY)
-PWDNAM="pwd"
-
-PWD_FILE = os.path.join(WDIR, PWDNAM)
-
-#That's quite important, it's the size of the RSA key
 KEY_SIZE = 2048
 
-__all__ = ['flypwd', 'clean', 'main']
-
+__all__ = ['flypwd', 'Flypwd', 'main']
 
 class AuthenticationException(Exception):
     """ notifies the error upon authentication """
     pass
 
-def get_the_damn_password(prompt = 'Password :'):
-    # I love Python!
-    if sys.stdin.isatty():
-        return getpass.getpass(prompt)
-    else:
-        raise Exception("no interactive shell: impossible to retrieve password")
 
-def check_key(rsafile):
-    """
-    checks the RSA key file
-    raises ValueError if not valid
-    """
-    with open(rsafile, 'r') as f:
-        return RSA.importKey(f.read(), passphrase="")
-
-
-def exrsagen():
-    """Generates the private key"""
+def flypwd(service='pwd', user=getpass.getuser()):
+    """ Main entry point """
+    f = Flypwd(service, user)
     try:
-        key = check_key(RSAFILE)
-        log.debug(str(key))
-        assert key.has_private()
+        return f.password
     except:
-        key = RSA.generate(KEY_SIZE)
-        with open(RSAFILE, 'w') as f:
-            f.write(key.exportKey('PEM'))
-        with open(PUBFILE, 'w') as f:
-            f.write(key.publickey().exportKey())
-
-    return key
-
-def expubgen():
-    """generates the public key"""
-    try:
-        pub = check_key(PUBFILE)
-        log.debug(str(pub))
-        assert pub.has_private() is not True
-    except:
-        key = check_key(RSAFILE)
-        with open(PUBFILE, 'w') as f:
-            pub = key.publickey().exportKey()
-            f.write(pub)
-
-    return pub
-
-def authenticateKerberos(pwd, krb5user):
-    """Macheronic authentication via Kerberos"""
-    try:
-        from sys import platform
-        cmd = ["kinit", krb5user] if krb5user else "kinit"
-        if platform == 'darwin':
-            cmd = ["kinit", "--password-file=STDIN", krb5user] if krb5user else ["kinit", "--password-file=STDIN"]
-
-        procKinit = Popen(cmd, stdin = PIPE, stdout = PIPE)
-        procKinit.stdin.write("%s\n" % pwd)
-        rcKinit = procKinit.wait()
-        log.debug("kinit rc: %d" % rcKinit)
-        authenticated = (rcKinit == 0)
-    except OSError, exp:
-        log.debug("could not find kinit...")
-        log.debug(exp)
-        authenticated = False
-
-    return authenticated
-
-def authenticatePam(pwd):
-    """Authentication through PAM"""
-    return pam.authenticate(getpass.getuser(), pwd)
-
-def authenticate(pwd, krb5user=None):
-    """Authenticates the current user with the standard pwd-file password"""
-    # auth = (authenticateKerberos(pwd) or authenticatePam(pwd))
-    auth = (authenticatePam(pwd) or authenticateKerberos(pwd, krb5user))
-    log.debug("is authenticated? %s" % str(auth))
-    return auth
-
-
-def emit_pwd(nome_file = PWD_FILE, auth=True, krb5user=None):
-    """Emits the password for the given filename"""
-    if os.path.isfile(RSAFILE) and os.path.isfile(nome_file):
-        key = check_key(RSAFILE)
-        with open(nome_file,'r') as pwdfile:
-            pwd_encrypted = pwdfile.read()
-
-        cipher = PKCS1_v1_5.new(key)
-        pwd = cipher.decrypt(pwd_encrypted, None)
-        if pwd is None:
-            raise Exception("No password found")
-
-        if auth:
-            if not authenticate(pwd, krb5user=krb5user):
-                os.remove(nome_file)
-                raise AuthenticationException()
-
-        if pwd.endswith('\n'):
-            return pwd[:-1]
-
-        return pwd
-
-    else:
-        log.debug("No RSA or PWD file")
-        raise Exception("No files RSA or PWD file")
-
-def flypwd(nome_file=None, prompt='Password: ', auth=True, krb5user=None):
-    """ Main entry point    
-    """
-    try:
-        pwd = emit_pwd(nome_file, auth=auth), 
-    except Exception as e:
-        log.warn(e)
-        key = exrsagen()
-        pub = expubgen()
-        pwd = get_the_damn_password(prompt)
-
-        cipher = PKCS1_v1_5.new(pub)
-
-        pwdEncrypted = cipher.encrypt(pwd)
-        log.debug("saving")
-        with open(nome_file, 'w') as f:
-            f.write(pwdEncrypted)
-
-        pwd = emit_pwd(nome_file, auth=auth, krb5user=krb5user)
-
-    return pwd
-
-def clean(nome_file=None):
-    """ Removes the files under the work dir """
-    try:
-        os.remove(RSAFILE)
-    except Exception as e:
-        log.warning(e)
-
-    try:
-        os.remove(PUBFILE)
-    except Exception as e:
-        log.warning(e)
-
-    try:
-        if nome_file is None:
-            nome_file = PWD_FILE
-        os.remove(nome_file)
-    except Exception as e:
-        log.warning(e)
+        f.clean()
+        f = Flypwd(service, user)
+        pwd = f.prompt()
+        
 
 def main():
     """console entry-point"""
@@ -225,37 +83,190 @@ def main():
                         action = 'store_true',
                         help="Shows the password: WARNING ;) ")
 
-    parser.add_argument('--auth', '-a',
-                        action = 'store_true',
-                        help="Verify authentication on PAM or Kerberos")
-
-    parser.add_argument('nomefile', nargs='?', default=PWD_FILE,
+    parser.add_argument('service', nargs='?', default='pwd',
                         help="filename to store encrypted password")
 
-    parser.add_argument('--krb5user', '-k', help="Kerberos User Principal")
+    parser.add_argument('user', nargs='?', default=getpass.getuser())
 
     args = parser.parse_args()
-    nomefile = os.path.join(WDIR,args.nomefile)
     log.debug(args)
-    should_auth = args.auth or nomefile == PWD_FILE
+    service = args.service
+    user = args.user if args.user else getpass.getuser()
+    f = Flypwd(service, user)
+
     if(args.clean):
         log.debug("cleaning..")
-        clean(nomefile)
+        f.clean()
         sys.exit(0)
+
     try:
-        log.debug("Should we authenticate? %s" % str(should_auth))
-        pwd = flypwd(nomefile, auth=should_auth, krb5user=args.krb5user)
-        if isinstance(pwd, tuple):
-            pwd = pwd[0]
+        pwd = f.password
         if(args.printout or not sys.stdout.isatty()):
             # o mi dai il printout o non sto su una shell interattiva
             # ed io ti scrivo la pwd su standard output...
             sys.stdout.write(str(pwd))
         else:
             log.info("Your password is stored")
+
     except AuthenticationException as ae:
         log.error("Authentication Error: your password was not stored")
+        sys.exit(-1)
 
+
+def authenticate(user, pwd):
+    """Authenticates the current user"""
+    # auth = (authenticateKerberos(pwd) or authenticatePam(pwd))
+    auth = True if authenticatePam(user, pwd) else authenticateKerberos(user, pwd)
+    log.debug("is authenticated? %s" % str(auth))
+    return auth
+
+
+def authenticateKerberos(user, pwd):
+    """Macheronic authentication via Kerberos, returns True if success, False if failed"""
+    try:
+        from sys import platform
+        cmd = ["kinit", user]
+        if platform == 'darwin':
+            cmd = ["kinit", "--password-file=STDIN", user]
+
+        procKinit = Popen(cmd, stdin = PIPE, stdout = PIPE)
+        procKinit.stdin.write("%s\n" % pwd)
+        rcKinit = procKinit.wait()
+        log.debug("kinit rc: %d" % rcKinit)
+        return (rcKinit == 0)
+    except OSError, exp:
+        log.debug("could not find kinit...")
+        log.debug(exp)
+        return False
+
+def authenticatePam(user, pwd):
+    """Authentication through PAM"""
+    return pam.authenticate(user, pwd)
+
+
+def check_key(keyfile):
+    """
+    checks the RSA key file
+    raises ValueError if not valid
+    """
+    with open(keyfile, 'r') as f:
+        return RSA.importKey(f.read(), passphrase="")
+
+
+class Flypwd(object):
+    """Represent the password stored"""
+    def __init__(self, service, user = getpass.getuser()):
+        self.service = service
+        self._service_pwd_file = os.path.join(WDIR, service)
+        self._private_key_file = os.path.join(WDIR, "flypwd_private")            
+        self._public_key_file = os.path.join(WDIR, "flypwd_pub")
+        self.user = user
+    
+        key, pub = self.check_keys()
+        
+        log.debug(self.service)
+        log.debug(self._service_pwd_file)
+        log.debug(self._private_key_file)
+        log.debug(self._public_key_file)
+        log.debug(self.user)
+
+    def clean(self):
+        """ Removes the files under the work dir """
+        try:
+            os.remove(self._private_key_file)
+        except Exception as e:
+            log.warning(e)
+            
+        try:
+            os.remove(self._public_key_file)
+        except Exception as e:
+            log.warning(e)
+
+        try:
+            self.remove_pwd_file()
+        except Exception as e:
+            log.warning(e)
+
+    def check_keys(self):
+        try:
+            key = check_key(self._private_key_file)
+            pub = check_key(self._public_key_file)
+            return key, pub
+        except:
+            return self.genkeys()
+            
+
+    def genkeys(self):
+        self.clean()
+        key = RSA.generate(KEY_SIZE)
+        with open(self._private_key_file, 'w') as f:
+            f.write(key.exportKey('PEM'))
+            
+        with open(self._public_key_file, 'w') as f:
+            f.write(key.publickey().exportKey())
+
+        return self.privatekey, self.publickey
+
+    @property
+    def publickey(self):
+        return check_key(self._public_key_file)
+        
+    @property
+    def privatekey(self):
+        return check_key(self._private_key_file)
+
+    def prompt(self, prompt = 'Password :'):
+        # I love Python!
+        if sys.stdin.isatty():
+            return getpass.getpass(prompt)
+        else:
+            raise Exception("no interactive shell: impossible to retrieve password")
+        
+
+    def remove_pwd_file(self):
+        os.remove(self._service_pwd_file)
+
+    @property
+    def password(self):
+        """Emits the password for the given filename"""
+        key, pub = self.check_keys()
+        if  os.path.isfile(self._service_pwd_file):
+
+            with open(self._service_pwd_file,'r') as pwdfile:
+                pwd_encrypted = pwdfile.read()
+
+            cipher = PKCS1_v1_5.new(key)
+
+            try:
+                pwd = cipher.decrypt(pwd_encrypted, None)
+            except:
+                self.remove_pwd_file()
+                return self.password
+
+            if not pwd:
+                self.remove_pwd_file()
+                return self.password
+
+            if pwd.endswith('\n'):
+                return pwd[:-1]
+                
+            if not authenticate(self.user, pwd):
+                log.warning("User %s not authenticated with the supplied password")
+
+            return pwd
+
+        else:
+            key, pub = self.check_keys()
+            log.debug("No PWD file")
+            pwd = self.prompt()
+            cipher = PKCS1_v1_5.new(pub)
+            pwdEncrypted = cipher.encrypt(pwd)
+            log.debug("saving")
+            with open(self._service_pwd_file, 'w') as f:
+                f.write(pwdEncrypted)
+                
+            return self.password
+       
 
 if __name__ == '__main__':
     main()
