@@ -33,7 +33,7 @@ from argparse import ArgumentParser
 import logging
 logging.basicConfig()
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 def mkdir_p(path):
     """Helper function mimic the mkdir -p option"""
@@ -115,16 +115,22 @@ def expubgen():
 
     return pub
 
-def authenticateKerberos(pwd):
+def authenticateKerberos(pwd, krb5user):
     """Macheronic authentication via Kerberos"""
     try:
-        procKinit = Popen("kinit", stdin = PIPE, stdout = PIPE)
+        from sys import platform
+        cmd = ["kinit", krb5user] if krb5user else "kinit"
+        if platform == 'darwin':
+            cmd = ["kinit", "--password-file=STDIN", krb5user] if krb5user else ["kinit", "--password-file=STDIN"]
+
+        procKinit = Popen(cmd, stdin = PIPE, stdout = PIPE)
         procKinit.stdin.write("%s\n" % pwd)
         rcKinit = procKinit.wait()
         log.debug("kinit rc: %d" % rcKinit)
         authenticated = (rcKinit == 0)
-    except OSError:
+    except OSError, exp:
         log.debug("could not find kinit...")
+        log.debug(exp)
         authenticated = False
 
     return authenticated
@@ -133,15 +139,15 @@ def authenticatePam(pwd):
     """Authentication through PAM"""
     return pam.authenticate(getpass.getuser(), pwd)
 
-def authenticate(pwd):
+def authenticate(pwd, krb5user=None):
     """Authenticates the current user with the standard pwd-file password"""
     # auth = (authenticateKerberos(pwd) or authenticatePam(pwd))
-    auth = (authenticatePam(pwd) or authenticateKerberos(pwd))
+    auth = (authenticatePam(pwd) or authenticateKerberos(pwd, krb5user))
     log.debug("is authenticated? %s" % str(auth))
     return auth
 
 
-def emit_pwd(nome_file = PWD_FILE, auth=True):
+def emit_pwd(nome_file = PWD_FILE, auth=True, krb5user=None):
     """Emits the password for the given filename"""
     if os.path.isfile(RSAFILE) and os.path.isfile(nome_file):
         key = check_key(RSAFILE)
@@ -154,7 +160,7 @@ def emit_pwd(nome_file = PWD_FILE, auth=True):
             raise Exception("No password found")
 
         if auth:
-            if not authenticate(pwd):
+            if not authenticate(pwd, krb5user=krb5user):
                 os.remove(nome_file)
                 raise AuthenticationException()
 
@@ -167,11 +173,11 @@ def emit_pwd(nome_file = PWD_FILE, auth=True):
         log.debug("No RSA or PWD file")
         raise Exception("No files RSA or PWD file")
 
-def flypwd(nome_file=None, prompt='Password: ', auth=True):
+def flypwd(nome_file=None, prompt='Password: ', auth=True, krb5user=None):
     """ Main entry point    
     """
     try:
-        pwd = emit_pwd(nome_file, auth=auth)
+        pwd = emit_pwd(nome_file, auth=auth), 
     except Exception as e:
         log.warn(e)
         key = exrsagen()
@@ -185,7 +191,7 @@ def flypwd(nome_file=None, prompt='Password: ', auth=True):
         with open(nome_file, 'w') as f:
             f.write(pwdEncrypted)
 
-        pwd = emit_pwd(nome_file, auth=auth)
+        pwd = emit_pwd(nome_file, auth=auth, krb5user=krb5user)
 
     return pwd
 
@@ -226,6 +232,7 @@ def main():
     parser.add_argument('nomefile', nargs='?', default=PWD_FILE,
                         help="filename to store encrypted password")
 
+    parser.add_argument('--krb5user', '-k', help="Kerberos User Principal")
 
     args = parser.parse_args()
     nomefile = os.path.join(WDIR,args.nomefile)
@@ -237,11 +244,13 @@ def main():
         sys.exit(0)
     try:
         log.debug("Should we authenticate? %s" % str(should_auth))
-        pwd = flypwd(nomefile, auth=should_auth)
+        pwd = flypwd(nomefile, auth=should_auth, krb5user=args.krb5user)
+        if isinstance(pwd, tuple):
+            pwd = pwd[0]
         if(args.printout or not sys.stdout.isatty()):
             # o mi dai il printout o non sto su una shell interattiva
             # ed io ti scrivo la pwd su standard output...
-            sys.stdout.write(pwd)
+            sys.stdout.write(str(pwd))
         else:
             log.info("Your password is stored")
     except AuthenticationException as ae:
