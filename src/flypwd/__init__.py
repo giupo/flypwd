@@ -24,8 +24,11 @@ import sys
 # http://atlee.ca/software/pam/index.html
 #
 # My best wishes to who has created this mess.
-
-import pam
+try:
+    from pam import authenticate as pamauthenticate
+except:
+    def pamauthenticate(user, pwd):
+        return False
 
 import errno
 from argparse import ArgumentParser
@@ -70,7 +73,7 @@ def flypwd(service='pwd', user=getpass.getuser()):
         f.clean()
         f = Flypwd(service, user)
         pwd = f.prompt()
-        
+
 
 def main():
     """console entry-point"""
@@ -116,6 +119,7 @@ def main():
 def authenticate(user, pwd):
     """Authenticates the current user"""
     # auth = (authenticateKerberos(pwd) or authenticatePam(pwd))
+
     auth = True if authenticatePam(user, pwd) else authenticateKerberos(user, pwd)
     log.debug("is authenticated? %s" % str(auth))
     return auth
@@ -141,7 +145,7 @@ def authenticateKerberos(user, pwd):
 
 def authenticatePam(user, pwd):
     """Authentication through PAM"""
-    return pam.authenticate(user, pwd)
+    return pamauthenticate(user, pwd)
 
 
 def check_key(keyfile):
@@ -158,12 +162,12 @@ class Flypwd(object):
     def __init__(self, service, user = getpass.getuser()):
         self.service = service
         self._service_pwd_file = os.path.join(WDIR, service)
-        self._private_key_file = os.path.join(WDIR, "flypwd_private")            
+        self._private_key_file = os.path.join(WDIR, "flypwd_private")
         self._public_key_file = os.path.join(WDIR, "flypwd_pub")
         self.user = user
-    
+
         key, pub = self.check_keys()
-        
+
         log.debug(self.service)
         log.debug(self._service_pwd_file)
         log.debug(self._private_key_file)
@@ -176,7 +180,7 @@ class Flypwd(object):
             os.remove(self._private_key_file)
         except Exception as e:
             log.warning(e)
-            
+
         try:
             os.remove(self._public_key_file)
         except Exception as e:
@@ -194,14 +198,14 @@ class Flypwd(object):
             return key, pub
         except:
             return self.genkeys()
-            
+
 
     def genkeys(self):
         self.clean()
         key = RSA.generate(KEY_SIZE)
         with open(self._private_key_file, 'w') as f:
             f.write(key.exportKey('PEM'))
-            
+
         with open(self._public_key_file, 'w') as f:
             f.write(key.publickey().exportKey())
 
@@ -210,7 +214,7 @@ class Flypwd(object):
     @property
     def publickey(self):
         return check_key(self._public_key_file)
-        
+
     @property
     def privatekey(self):
         return check_key(self._private_key_file)
@@ -221,7 +225,7 @@ class Flypwd(object):
             return getpass.getpass(prompt)
         else:
             raise Exception("no interactive shell: impossible to retrieve password")
-        
+
 
     def remove_pwd_file(self):
         os.remove(self._service_pwd_file)
@@ -249,7 +253,7 @@ class Flypwd(object):
 
             if pwd.endswith('\n'):
                 return pwd[:-1]
-                
+
             if not authenticate(self.user, pwd):
                 log.warning("User %s not authenticated with the supplied password")
 
@@ -264,9 +268,9 @@ class Flypwd(object):
             log.debug("saving")
             with open(self._service_pwd_file, 'w') as f:
                 f.write(pwdEncrypted)
-                
+
             return self.password
-       
+
 
 if __name__ == '__main__':
     main()
