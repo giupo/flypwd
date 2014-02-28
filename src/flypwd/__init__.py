@@ -47,10 +47,10 @@ def mkdir_p(path):
             pass
         else: raise
 
-__PROG_DIR__ = ".flypwd"
+__PROG_DIR__ = ".ssh"
 HOME = os.path.expanduser("~")
 WDIR = os.path.join(HOME, __PROG_DIR__)
-
+_DEFAULT_SERVICE_ = 'pwd'
 # Assert you have the working dir ;)
 mkdir_p(WDIR)
 
@@ -64,7 +64,7 @@ class AuthenticationException(Exception):
     pass
 
 
-def flypwd(service='pwd', user=getpass.getuser()):
+def flypwd(service=_DEFAULT_SERVICE_, user=getpass.getuser()):
     """ Main entry point """
     f = Flypwd(service, user)
     try:
@@ -86,7 +86,7 @@ def main():
                         action = 'store_true',
                         help="Shows the password: WARNING ;) ")
 
-    parser.add_argument('service', nargs='?', default='pwd',
+    parser.add_argument('service', nargs='?', default=_DEFAULT_SERVICE_,
                         help="filename to store encrypted password")
 
     parser.add_argument('user', nargs='?', default=getpass.getuser())
@@ -162,8 +162,8 @@ class Flypwd(object):
     def __init__(self, service, user = getpass.getuser()):
         self.service = service
         self._service_pwd_file = os.path.join(WDIR, service)
-        self._private_key_file = os.path.join(WDIR, "flypwd_private")
-        self._public_key_file = os.path.join(WDIR, "flypwd_pub")
+        self._private_key_file = os.path.join(WDIR, "pwd.pem")
+        self._public_key_file = os.path.join(WDIR, "pwd.pub")
         self.user = user
 
         key, pub = self.check_keys()
@@ -254,7 +254,7 @@ class Flypwd(object):
             if pwd.endswith('\n'):
                 return pwd[:-1]
 
-            if not authenticate(self.user, pwd):
+            if self.service == _DEFAULT_SERVICE_ and not authenticate(self.user, pwd):
                 log.warning("User %s not authenticated with the supplied password")
 
             return pwd
