@@ -48,7 +48,7 @@ Then it asks for the password (since you haven't specified a different password 
 *NB*: if you look into $HOME/.ssh, you'll find a bunch of new files added (pwd.pem, pwd.pub, pwd = private, public, password file)
 
 Now with a different file::
-
+ 
      $ flypwd another
      WARNING:flypwd:No files RSA or PWD file # another wasn't there
      Password:                               # gimmie the password
@@ -57,9 +57,10 @@ Now with a different file::
 *NB* as before: now you'll have $HOME/.ssh/`another` with the encrypted password
 
 From the code, it's just the same as command line::
+
      from flypwd import flypwd
-     flypwd() # same as command
-     flypwd("anotherfileName") 
+     flypwd() # same as command line, returns a string containing the password
+     flypwd("anotherfileName") # retrieves a password for another system
   
 TODO
 ----
