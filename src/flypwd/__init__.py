@@ -173,6 +173,7 @@ class Flypwd(object):
         log.debug(self._private_key_file)
         log.debug(self._public_key_file)
         log.debug(self.user)
+        
 
     def clean(self):
         """ Removes the files under the work dir """
@@ -205,9 +206,12 @@ class Flypwd(object):
         key = RSA.generate(KEY_SIZE)
         with open(self._private_key_file, 'w') as f:
             f.write(key.exportKey('PEM'))
-
+            
         with open(self._public_key_file, 'w') as f:
             f.write(key.publickey().exportKey())
+        
+        os.chmod(self._private_key_file, 0600)
+        os.chmod(self._public_key_file, 0600)
 
         return self.privatekey, self.publickey
 
@@ -268,6 +272,8 @@ class Flypwd(object):
             log.debug("saving")
             with open(self._service_pwd_file, 'w') as f:
                 f.write(pwdEncrypted)
+
+            os.chmod(self._service_pwd_file, 0600)
 
             return self.password
 

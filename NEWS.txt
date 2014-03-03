@@ -7,10 +7,15 @@ News
 ====
 
 0.2.1
----
+-----
 
-- Stores different password for different services
-- Prevents the authentication if service is different from _DEFAULT_SERVICE_
+ - Stores passwords in 0600 file permissions.
+
+0.2.1
+-----
+
+ - Stores different password for different services
+ - Prevents the authentication if service is different from _DEFAULT_SERVICE_
 
 0.1
 ---
