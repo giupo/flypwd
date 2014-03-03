@@ -2,9 +2,9 @@
 Flypwd
 ======
 
-Command line utility to store (under $HOME/.ssh) passwords (one per file).
+Command line utility to store (under *$HOME/.ssh*) passwords (one per file).
 
-A single password (the one stored in the $HOME/.ssh/pwd file) can be checked 
+A single password (the one stored in the *$HOME/.ssh/pwd* file) can be checked 
 against PAM or Kerberos. If you specify a different password file, authentication
 won't be executed (Why this? Because I hate myself...)
 
@@ -28,9 +28,8 @@ then the usual::
 Dependencies
 ~~~~~~~~~~~~
 - `pycrypto`_ (to encrypt/decrypt)
-- `pam`_ (to authenticate: WatchIt! Don't "pip install pam": pip will install another module PAM, which will give you just headache). That's why I've removed the *install_requires* entry: please download `pam`_ from the link, gunzip it, and then execute the usual "python setup.py install" for `pam`_
-
-
+- `pam`_ (to authenticate: **Watch It**! Don't `pip install pam` : pip will install another module PAM, which will give you just headache). That's why I've removed the *install_requires* entry: please download `pam`_ from the link, gunzip it, and then execute the usual "python setup.py install" for `pam`_
+                                    
 How does it works
 -----------------
 
@@ -45,7 +44,7 @@ The first executin finds out you don't have an RSA key (flypwd creates one custo
 
 Then it asks for the password (since you haven't specified a different password file, it will try to authenticate over PAM/Kerberos (it's a requirement of my employer, please use --auth option to force auth over different passwords files)
 
-*NB*: if you look into $HOME/.ssh, you'll find a bunch of new files added (pwd.pem, pwd.pub, pwd = private, public, password file)
+**NB**: if you look into $HOME/.ssh, you'll find a bunch of new files added (pwd.pem, pwd.pub, pwd = private, public, password file)
 
 Now with a different file::
  
@@ -54,7 +53,7 @@ Now with a different file::
      Password:                               # gimmie the password
      INFO:flypwd:Your password is stored     # ok!
 
-*NB* as before: now you'll have $HOME/.ssh/`another` with the encrypted password
+**NB** as before: now you'll have *$HOME/.ssh/another* with the encrypted password
 
 From the code, it's just the same as command line::
 
