@@ -1,22 +1,25 @@
+# -*- coding: utf-8 -*-
 from lettuce import *
 
-@step('I have the number (\d+)')
-def have_the_number(step, number):
-    world.number = int(number)
+@step(u'I have the password (\w+)')
+def have_the_password(step, password):
+    world.password = password
 
-@step('I compute its factorial')
-def compute_its_factorial(step):
-    world.number = factorial(world.number)
+@step(u'I use flypwd')
+def when_i_use_flypwd(step):
+    from flypwd.flypwd import flypwd
+    world.flypwd = flypwd(getattr(world, 'service', 'test'))
+    
+@step(u'I have the service (\w+)')
+def have_the_service(step, service):
+    world.service = service
 
-@step('I see the number (\d+)')
-def check_number(step, expected):
-    expected = int(expected)
-    assert world.number == expected, \
-        "Got %d" % world.number
+@step(u'have a file named (\w+)')
+def have_a_file_named(step, name):
+    from os.path import expanduser, isfile, join
+    home = expanduser("~")
+    assert isfile(join(home, ".ssh", name))
 
-def factorial(number):
-    number = int(number)
-    if (number == 0) or (number == 1):
-        return 1
-    else:
-        return number
+@step(u'retrieve the password (\w+)')
+def have_the_password_from_service(step, password):
+    assert world.flypwd == password

@@ -72,7 +72,7 @@ def flypwd(service=_DEFAULT_SERVICE_, user=getpass.getuser()):
     except:
         f.clean()
         f = Flypwd(service, user)
-        pwd = f.prompt()
+        return f.prompt()
 
 
 def main():

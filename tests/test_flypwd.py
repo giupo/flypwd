@@ -10,7 +10,7 @@ Tests for `flypwd` module.
 
 import unittest
 
-from flypwd import flypwd
+# from flypwd import flypwd
 
 
 class TestFlypwd(unittest.TestCase):
