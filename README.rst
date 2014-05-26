@@ -89,6 +89,11 @@ TODO
 
 Credits
 -------
+
+- `Distribute`_
+- `Buildout`_
+- `modern-package-template`_
+
 .. _here: http://github.com/giupo/flypwd
 .. _pycrypto: https://pypi.python.org/pypi/pycrypto
 .. _pam: https://pypi.python.org/pypi/pam
