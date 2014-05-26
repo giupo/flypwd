@@ -33,7 +33,7 @@ test_requirements = [
 
 setup(
     name='flypwd',
-    version='0.1.0',
+    version='0.1.1',
     description='Library to store and retrieve passwords',
     long_description=readme + '\n\n' + history,
     author='Giuseppe Acito',

@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 __author__ = 'Giuseppe Acito'
 __email__ = 'giuseppe.acito@gmail.com'
-__version__ = '0.1.0'#!/usr/bin/env python
+__version__ = '0.1.1'
 
 #
 # flypwd -- gestione sicura delle password utente
