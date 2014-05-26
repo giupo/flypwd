@@ -6,8 +6,8 @@ def have_the_password(step, password):
     world.password = password
 
 @step(u'I use flypwd')
-def when_i_use_flypwd(step):
-    from flypwd.flypwd import flypwd
+def use_flypwd(step):
+    from flypwd import flypwd
     world.flypwd = flypwd(getattr(world, 'service', 'test'))
     
 @step(u'I have the service (\w+)')
