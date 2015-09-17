@@ -3,7 +3,7 @@
 
 __author__ = 'Giuseppe Acito'
 __email__ = 'giuseppe.acito@gmail.com'
-__version__ = '0.1.2'
+__version__ = '0.2.0'
 
 #
 # flypwd -- gestione sicura delle password utente
@@ -166,8 +166,10 @@ class Flypwd(object):
     def __init__(self, service, user = getpass.getuser()):
         self.service = service
         self._service_pwd_file = os.path.join(WDIR, service)
-        self._private_key_file = os.path.join(WDIR, "pwd.pem")
-        self._public_key_file = os.path.join(WDIR, "pwd.pub")
+        self._private_key_file = os.path.join(WDIR, "flypwd-" + \
+	    service + ".key")
+        self._public_key_file = os.path.join(WDIR, "flypwd-" + \
+            service + ".key.pub")
         self.user = user
 
         key, pub = self.check_keys()
