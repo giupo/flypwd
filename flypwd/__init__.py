@@ -51,10 +51,10 @@ def mkdir_p(path):
             pass
         else: raise
 
-__PROG_DIR__ = ".ssh"
+__PROG_DIR__ = ".flypwd"
 HOME = os.path.expanduser("~")
 WDIR = os.path.join(HOME, __PROG_DIR__)
-_DEFAULT_SERVICE_ = 'pwd'
+_DEFAULT_SERVICE_ = 'default'
 # Assert you have the working dir ;)
 mkdir_p(WDIR)
 
