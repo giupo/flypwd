@@ -275,8 +275,10 @@ class Flypwd(object):
             if self.service == _DEFAULT_SERVICE_ and \
                not authenticate(self.user, pwd):
                 log.warning(
-                    "User %s not authenticated with the supplied password")
-
+                    "User %s not authenticated with the supplied password" % self.user)
+                self.remove_pwd_file()
+                return self.password
+                
             return pwd
 
         else:
