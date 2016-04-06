@@ -13,6 +13,7 @@ __version__ = '0.2.2'
 
 import getpass
 import warnings
+import stat
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -33,6 +34,8 @@ import sys
 # http://atlee.ca/software/pam/index.html
 #
 # My best wishes to who has created this mess.
+#
+
 try:
     from pam import authenticate as pamauthenticate
 except:
@@ -270,7 +273,7 @@ class Flypwd(object):
                 return self.password
 
             if pwd.endswith('\n'):
-                return pwd[:-1]
+                pwd = pwd[:-1]
 
             if self.service == _DEFAULT_SERVICE_ and \
                not authenticate(self.user, pwd):
@@ -291,7 +294,8 @@ class Flypwd(object):
             with open(self._service_pwd_file, 'w') as f:
                 f.write(pwdEncrypted)
 
-            os.chmod(self._service_pwd_file, 0600)
+            os.chmod(self._service_pwd_file, stat.S_IREAD)
+            os.chmod(self._service_pwd_file, stat.S_IWRITE)
 
             return self.password
 
