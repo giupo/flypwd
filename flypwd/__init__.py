@@ -227,9 +227,10 @@ class Flypwd(object):
             
         with open(self._public_key_file, 'w') as f:
             f.write(key.publickey().exportKey())
-        
-        os.chmod(self._private_key_file, 0600)
-        os.chmod(self._public_key_file, 0600)
+
+        perm = stat.S_IRUSR | stat.S_IWUSR
+        os.chmod(self._private_key_file, perm)
+        os.chmod(self._public_key_file, perm)
 
         return self.privatekey, self.publickey
 
@@ -294,8 +295,9 @@ class Flypwd(object):
             with open(self._service_pwd_file, 'w') as f:
                 f.write(pwdEncrypted)
 
-            os.chmod(self._service_pwd_file, stat.S_IREAD)
-            os.chmod(self._service_pwd_file, stat.S_IWRITE)
+            perm = stat.S_IRUSR | stat.S_IWUSR
+            os.chmod(self._service_pwd_file, perm)
+            os.chmod(self._service_pwd_file, perm)
 
             return self.password
 
