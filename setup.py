@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
+
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -24,6 +24,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
     "pycrypto",
+    "coloredlogs"
 ]
 
 test_requirements = [
@@ -33,7 +34,7 @@ test_requirements = [
 
 setup(
     name='flypwd',
-    version='0.2.4',
+    version='0.3.0',
     description='Library to store and retrieve passwords',
     long_description=readme + '\n\n' + history,
     author='Giuseppe Acito',
