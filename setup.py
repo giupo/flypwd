@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
+
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -24,6 +24,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
     "pycrypto",
+    "coloredlogs"
 ]
 
 test_requirements = [

@@ -10,20 +10,24 @@ __version__ = '0.2.4'
 #
 
 """Library for flypwd password management"""
+import os
+import os.path
+import sys
+import logging
 
+import coloredlogs
 import getpass
 import warnings
 import stat
+import errno
+
+from argparse import ArgumentParser
+from subprocess import PIPE, Popen
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from Crypto.PublicKey import RSA
     from Crypto.Cipher import PKCS1_v1_5
-
-import os.path
-import os
-from subprocess import PIPE, Popen
-import sys
 
 # The following 'pam' package can be found here:
 # http://atlee.ca/software/pam/index.html
@@ -38,17 +42,9 @@ import sys
 
 try:
     from pam import authenticate as pamauthenticate
-except:
+except Exception as e:
     def pamauthenticate(user, pwd):
         return False
-
-import errno
-from argparse import ArgumentParser
-
-import logging
-logging.basicConfig()
-log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 def mkdir_p(path):
@@ -60,6 +56,10 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+        
+log = logging.getLogger("flypwd")
+
 
 __PROG_DIR__ = ".flypwd"
 HOME = os.path.expanduser("~")
@@ -101,19 +101,30 @@ def main():
                         action='store_true',
                         help="Shows the password: WARNING ;) ")
 
+    parser.add_argument('--verify', '-v', action='store_true',
+                        help="verify password with authentication system")
+    
     parser.add_argument('service', nargs='?', default=_DEFAULT_SERVICE_,
                         help="filename to store encrypted password")
 
+    parser.add_argument('--debug', action='store_true')
+    
     parser.add_argument('user', nargs='?', default=getpass.getuser())
 
     args = parser.parse_args()
+    
+    if args.debug:
+        coloredlogs.install(level=logging.DEBUG)
+    else:
+        coloredlogs.install(level=logging.INFO)
+
     log.debug(args)
     service = args.service
     user = args.user if args.user else getpass.getuser()
-    f = Flypwd(service, user)
+    f = Flypwd(service, user, shouldVerify=args.verify)
 
     if(args.clean):
-        log.debug("cleaning..")
+        log.debug("cleaning...")
         f.clean()
         sys.exit(0)
 
@@ -177,7 +188,7 @@ def check_key(keyfile):
 
 class Flypwd(object):
     """Represent the password stored"""
-    def __init__(self, service, user=getpass.getuser()):
+    def __init__(self, service, user=getpass.getuser(), shouldVerify=False):
         self.service = service
         self._service_pwd_file = os.path.join(WDIR, service)
         self._private_key_file = os.path.join(WDIR, "flypwd-" +
@@ -185,6 +196,7 @@ class Flypwd(object):
         self._public_key_file = os.path.join(WDIR, "flypwd-" +
                                              service + ".key.pub")
         self.user = user
+        self.shouldVerify = shouldVerify
 
         key, pub = self.check_keys()
 
@@ -217,6 +229,7 @@ class Flypwd(object):
             pub = check_key(self._public_key_file)
             return key, pub
         except:
+            log.warn("Keys are invalid, regenerating...")
             return self.genkeys()
 
     def genkeys(self):
@@ -265,7 +278,7 @@ class Flypwd(object):
 
             try:
                 pwd = cipher.decrypt(pwd_encrypted, None)
-            except:
+            except Exception as e:
                 self.remove_pwd_file()
                 return self.password
 
@@ -276,10 +289,10 @@ class Flypwd(object):
             if pwd.endswith('\n'):
                 pwd = pwd[:-1]
 
-            if self.service == _DEFAULT_SERVICE_ and \
-               not authenticate(self.user, pwd):
+            if self.shouldVerify and not authenticate(self.user, pwd):
                 log.warning(
-                    "User %s not authenticated with the supplied password" % self.user)
+                    "User %s not authenticated with the supplied password",
+                    self.user)
                 self.remove_pwd_file()
                 return self.password
                 
