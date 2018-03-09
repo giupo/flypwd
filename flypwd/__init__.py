@@ -3,7 +3,7 @@
 
 __author__ = 'Giuseppe Acito'
 __email__ = 'giuseppe.acito@gmail.com'
-__version__ = '0.3.0'
+__version__ = '1.0.0'
 
 #
 # flypwd -- gestione sicura delle password utente
