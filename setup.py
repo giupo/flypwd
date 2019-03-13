@@ -34,7 +34,7 @@ test_requirements = [
 
 setup(
     name='flypwd',
-    version='1.0.0',
+    version='1.1.0',
     description='Library to store and retrieve passwords',
     long_description=readme + '\n\n' + history,
     author='Giuseppe Acito',
@@ -59,7 +59,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.7',
     ],
     cmdclass={'test': PyTest},
     test_suite='tests',
