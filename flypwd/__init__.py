@@ -226,6 +226,10 @@ class Flypwd(object):
             with open(self._service_pwd_file, 'wb') as f:
                 f.write(pwdEncrypted)
 
+            if not os.path.isfile(self._service_pwd_file):
+                log.warning("For some wierd reason, file was not created...")
+            
+                
             perm = stat.S_IRUSR | stat.S_IWUSR
             try:
                 os.chmod(self._service_pwd_file, perm)
