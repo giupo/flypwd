@@ -222,13 +222,16 @@ class Flypwd(object):
             
             pwd = self.prompt()
             pwdEncrypted = encrypt_with_pub(pwd, pub)
-            log.debug("saving")
+            log.debug("saving %s", self._service_pwd_file)
             with open(self._service_pwd_file, 'wb') as f:
                 f.write(pwdEncrypted)
 
             perm = stat.S_IRUSR | stat.S_IWUSR
-            os.chmod(self._service_pwd_file, perm)
-            os.chmod(self._service_pwd_file, perm)
+            try:
+                os.chmod(self._service_pwd_file, perm)
+                os.chmod(self._service_pwd_file, perm)
+            except Exception as e:
+                log.warn(e)
 
             return self.password
 
