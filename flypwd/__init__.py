@@ -183,7 +183,7 @@ class Flypwd(object):
         if os.path.isfile(self._service_pwd_file):
             os.remove(self._service_pwd_file)
     
-    =@property
+    @property
     def password(self):
         """Emits the password for the given filename"""
         key, pub = self.check_keys()
