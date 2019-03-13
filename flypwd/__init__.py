@@ -264,8 +264,12 @@ class Flypwd(object):
                 "no interactive shell: impossible to retrieve password")
 
     def remove_pwd_file(self):
-        os.remove(self._service_pwd_file)
+        if os.path.isfile(self._service_pwd_file):
+            os.remove(self._service_pwd_file)
+        else:
+            log.warning("%s doesn't exists", self._service_pwd_file)
 
+           
     @property
     def password(self):
         """Emits the password for the given filename"""
