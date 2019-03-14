@@ -1,8 +1,10 @@
 # -*- coding:utf-8 -*-
 
 import logging
+import warnings
 
 from flypwd.config import config
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     from Crypto.PublicKey import RSA
