@@ -48,7 +48,7 @@ def authenticateKerberos(user, pwd):
             cmd = ["kinit", "--password-file=STDIN", user]
 
         procKinit = Popen(cmd, stdin=PIPE, stdout=PIPE)
-        procKinit.stdin.write("%s\n" % pwd)
+        procKinit.stdin.write(("%s\n" % pwd).encode('utf-8'))
         rcKinit = procKinit.wait()
         log.debug("kinit rc: %d" % rcKinit)
         return (rcKinit == 0)

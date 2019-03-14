@@ -120,11 +120,11 @@ class Flypwd(object):
 
         key, pub = self.check_keys()
 
-        log.debug(self.service)
-        log.debug(self._service_pwd_file)
-        log.debug(self._private_key_file)
-        log.debug(self._public_key_file)
-        log.debug(self.user)
+        log.debug("Configured service: %s", self.service)
+        log.debug("Configured service file: %s", self._service_pwd_file)
+        log.debug("Configured private file: %s", self._private_key_file)
+        log.debug("Configured public file: %s", self._public_key_file)
+        log.debug("User: %s", self.user)
 
     def clean(self):
         """ Removes the files under the work dir """
@@ -150,6 +150,7 @@ class Flypwd(object):
         try:
             key = check_key(self._private_key_file)
             pub = check_key(self._public_key_file)
+            log.debug("Keys are ok")
             return key, pub
         except Exception as e:
             log.debug(e)
@@ -188,6 +189,7 @@ class Flypwd(object):
         """Emits the password for the given filename"""
         key, pub = self.check_keys()
         if os.path.isfile(self._service_pwd_file):
+            log.debug("%s is a valid file", self._service_pwd_file)
             with open(self._service_pwd_file, 'rb') as pwdfile:
                 pwd_encrypted = pwdfile.read()
 
@@ -197,11 +199,9 @@ class Flypwd(object):
                 pwd = cipher.decrypt(pwd_encrypted, None).decode('utf-8')
             except Exception as e:
                 log.debug(e)
-                self.remove_pwd_file()
                 return self.password
 
             if not pwd:
-                self.remove_pwd_file()
                 return self.password
 
             if pwd.endswith('\n'):
@@ -211,12 +211,13 @@ class Flypwd(object):
                 log.warning(
                     "User %s not authenticated with the supplied password",
                     self.user)
-                self.remove_pwd_file()
+                # self.remove_pwd_file()
                 return self.password
                 
             return pwd
 
         else:
+            log.debug("%s is not a valid file", self._service_pwd_file)
             key, pub = self.check_keys()
             log.debug("No PWD file")
             
