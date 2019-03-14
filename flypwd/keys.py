@@ -3,11 +3,10 @@
 import logging
 
 from flypwd.config import config
-# with warnings.catch_warnings():
-#    warnings.simplefilter("ignore")
-
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from Crypto.PublicKey import RSA
+    from Crypto.Cipher import PKCS1_v1_5
 
 log = logging.getLogger(__name__)
 
