@@ -45,7 +45,7 @@ def flypwd(service=config.get('service', 'default'),
         return f.password
     except Exception as e:
         log.error(e)
-        f.clean()
+        # f.clean()
         f = Flypwd(service, user)
         return f.prompt()
 
@@ -157,7 +157,7 @@ class Flypwd(object):
             return self.genkeys()
 
     def genkeys(self):
-        self.clean()
+        # self.clean()
         key = gen_key()
         with open(self._private_key_file, 'wb') as f:
             f.write(key.exportKey('PEM'))

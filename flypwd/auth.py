@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import logging
-from subprocess import Popen
+from subprocess import Popen, PIPE
 
 log = logging.getLogger(__name__)
 
