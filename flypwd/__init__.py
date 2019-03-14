@@ -79,7 +79,6 @@ def main():
     else:
         coloredlogs.install(level=logging.INFO)
 
-    log.debug(args)
     service = args.service
     user = args.user if args.user else getpass.getuser()
     f = Flypwd(service, user, shouldVerify=args.verify)
@@ -118,7 +117,7 @@ class Flypwd(object):
         self.user = user
         self.shouldVerify = shouldVerify
 
-        key, pub = self.check_keys()
+        # key, pub = self.check_keys()
 
         log.debug("Configured service: %s", self.service)
         log.debug("Configured service file: %s", self._service_pwd_file)
@@ -126,6 +125,15 @@ class Flypwd(object):
         log.debug("Configured public file: %s", self._public_key_file)
         log.debug("User: %s", self.user)
 
+
+    def cleanPasswordFile(self):
+        try:
+            if os.path.isfile(self._service_pwd_file):
+                os.remove(self._service_pwd_file)
+        except Exception as e:
+            log.warning(e)
+        
+        
     def clean(self):
         """ Removes the files under the work dir """
         try:
@@ -140,12 +148,9 @@ class Flypwd(object):
         except Exception as e:
             log.warning(e)
 
-        try:
-            if os.path.isfile(self._service_pwd_file):
-                os.remove(self._service_pwd_file)
-        except Exception as e:
-            log.warning(e)
-
+        self.clearnPasswordFile()
+            
+            
     def check_keys(self):
         try:
             key = check_key(self._private_key_file)
@@ -184,6 +189,7 @@ class Flypwd(object):
     @property
     def password(self):
         """Emits the password for the given filename"""
+        log.debug("Obtaining the password...")
         key, pub = self.check_keys()
         if os.path.isfile(self._service_pwd_file):
             log.debug("%s is a valid file", self._service_pwd_file)
@@ -194,11 +200,15 @@ class Flypwd(object):
 
             try:
                 pwd = cipher.decrypt(pwd_encrypted, None).decode('utf-8')
+                log.debug("password correctly decrypted")
             except Exception as e:
-                log.debug(e)
+                log.warn("Error decripting password")
+                self.cleanPasswordFile()
                 return self.password
 
             if not pwd:
+                log.warning("Password is empty")
+                self.cleanPasswordFile()
                 return self.password
 
             if pwd.endswith('\n'):
@@ -208,12 +218,13 @@ class Flypwd(object):
                 log.warning(
                     "User %s not authenticated with the supplied password",
                     self.user)
+                self.cleanPasswordFile()
                 return self.password
-                
+
             return pwd
 
         else:
-            log.debug("%s is not a valid file", self._service_pwd_file)
+            log.warn("%s is not a valid file", self._service_pwd_file)
             key, pub = self.check_keys()
             log.debug("No PWD file")
             
@@ -225,14 +236,13 @@ class Flypwd(object):
 
             if not os.path.isfile(self._service_pwd_file):
                 log.warning("For some wierd reason, file was not created...")
-            
-                
+                            
             perm = stat.S_IRUSR | stat.S_IWUSR
             try:
                 os.chmod(self._service_pwd_file, perm)
                 os.chmod(self._service_pwd_file, perm)
             except Exception as e:
-                log.warn(e)
+                log.warning(e)
 
             return self.password
 
