@@ -180,9 +180,6 @@ class Flypwd(object):
         else:
             raise Exception("flypwd can't work without an interactive shell")
 
-    def remove_pwd_file(self):
-        if os.path.isfile(self._service_pwd_file):
-            os.remove(self._service_pwd_file)
     
     @property
     def password(self):
@@ -211,7 +208,6 @@ class Flypwd(object):
                 log.warning(
                     "User %s not authenticated with the supplied password",
                     self.user)
-                # self.remove_pwd_file()
                 return self.password
                 
             return pwd
